@@ -1,6 +1,6 @@
 "use client";
 
-import { RoomState } from "@/types";
+import { RoomState } from "@/types/index";
 import { floorOptions, wallOptions, tableOptions } from "@/data";
 
 export default function RoomSVG({ state }: { state: RoomState }) {
