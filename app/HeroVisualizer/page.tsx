@@ -121,24 +121,48 @@ export default function HeroVisualizer() {
             <div
               key={key}
               className="absolute inset-0 pointer-events-none"
-              style={{
-                backgroundImage: `url(${sel.img})`,
-                backgroundSize: cfg.size,
-                backgroundRepeat: "repeat",
-                mixBlendMode: cfg.blend,
-                WebkitMaskImage: `url(${cfg.maskImage})`,
-                maskImage: `url(${cfg.maskImage})`,
-                // luminance mode = use the mask's black/white brightness,
-                // not its (nonexistent) transparency channel
-                WebkitMaskMode: "luminance" as any,
-                maskMode: "luminance" as any,
-                WebkitMaskSize: "100% 100%",
-                maskSize: "100% 100%",
-                WebkitMaskRepeat: "no-repeat",
-                maskRepeat: "no-repeat",
-                WebkitMaskPosition: "center",
-                maskPosition: "center",
-              }}
+              // style={{
+              //   backgroundImage: `url(${sel.img})`,
+              //   backgroundSize: cfg.size,
+              //   backgroundRepeat: "repeat",
+              //   mixBlendMode: cfg.blend,
+              //   WebkitMaskImage: `url(${cfg.maskImage})`,
+              //   maskImage: `url(${cfg.maskImage})`,
+              //   // luminance mode = use the mask's black/white brightness,
+              //   // not its (nonexistent) transparency channel
+              //   WebkitMaskMode: "luminance" as any,
+              //   // maskMode: "luminance" as any,
+              //   maskMode: "luminance" as any,
+              //   WebkitMaskSize: "100% 100%",
+              //   maskSize: "100% 100%",
+              //   WebkitMaskRepeat: "no-repeat",
+              //   maskRepeat: "no-repeat",
+              //   WebkitMaskPosition: "center",
+              //   maskPosition: "center",
+              // }}
+              style={
+  {
+    backgroundImage: `url(${sel.img})`,
+    backgroundSize: cfg.size,
+    backgroundRepeat: "repeat",
+    mixBlendMode: cfg.blend,
+
+    WebkitMaskImage: `url(${cfg.maskImage})`,
+    maskImage: `url(${cfg.maskImage})`,
+
+    // Use the black/white brightness of the PNG as the mask
+    maskMode: "luminance",
+
+    WebkitMaskSize: "100% 100%",
+    maskSize: "100% 100%",
+
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+
+    WebkitMaskPosition: "center",
+    maskPosition: "center",
+  } as React.CSSProperties
+}
             />
           );
         })}
