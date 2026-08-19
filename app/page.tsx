@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Shield, Award, Truck, Leaf } from "lucide-react";
 import VisualizerSection from "./Visualizersection/page";
-import HeroVisualizer from "./HeroVisualizer/HeroVisualizer";
+import HeroVisualizer from "./components/HeroVisualizer";
 import { products } from "@/data";
 
 export default function HomePage() {
