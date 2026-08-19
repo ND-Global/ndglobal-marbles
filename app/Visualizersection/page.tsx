@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import RoomSVG from "../components/Roomsvg/RoomSVG";
-import SwatchPicker from "../Swatchpicker/page";
+import SwatchPicker from "../components/Swatchpicker";
 import { floorOptions, wallOptions, tableOptions } from "@/data";
 import { Category, RoomState } from "@/types";
 
