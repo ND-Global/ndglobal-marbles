@@ -10,7 +10,7 @@ export default function HomePage() {
     <>
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
         <HeroVisualizer />
-      {/* <section className="relative min-h-[90vh] flex items-center justify-center bg-stone-900 overflow-hidden">
+      {/* <section clssName="relative min-h-[90vh] flex items-center justify-center bg-stone-900 overflow-hidden">
         
         <div
           className="absolute inset-0 bg-cover bg-center opacity-30"
