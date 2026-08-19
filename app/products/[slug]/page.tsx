@@ -40,7 +40,7 @@ export default async function ProductPage({ params }: Props) {
 
       <section className="py-14 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
-          {/* Image + stone description */}
+          {/* Image + stone descriptio */}
           <div>
             <div
               className="relative h-[420px] lg:h-[500px] rounded-2xl overflow-hidden shadow-lg"
