@@ -52,7 +52,7 @@ type Category = {
 
 const CATEGORIES: Record<CategoryKey, Category> = {
   table: {
-    label: "table",
+    label: "Countertop",
     maskImage: "/masks/tablemask.png",
     blend: "normal",
     size: "300px 300px",
