@@ -15,8 +15,12 @@ import Image from "next/image";
  *    any obstruction — just paint that spot black in the mask, no
  *    coordinates or polygons needed.
  * 3. The texture is applied with CSS `mask-image: url(mask.png)`,
- *    which uses the mask's white/black areas directly — completely
- *    replacing the old clip-path polygon guessing.
+ *    using `mask-mode: luminance` so the browser reads the mask's
+ *    black/white BRIGHTNESS (not its alpha/transparency channel).
+ *    This matters because a flattened, fully-opaque PNG (like the
+ *    ones exported from Photopea) has NO transparency at all — so
+ *    without luminance mode the browser treats the whole image as
+ *    100% visible and the texture leaks across the entire photo.
  *
  * HOW TO MAKE A MASK (Photoshop / Figma / even MS Paint):
  *   1. Open kitchen2.png as your base/reference layer.
@@ -49,23 +53,23 @@ type Category = {
 const CATEGORIES: Record<CategoryKey, Category> = {
   table: {
     label: "table",
-    maskImage: "/masks/table-mask.png",
-    blend: "multiply",
+    maskImage: "/masks/tablemask.png",
+    blend: "normal",
     size: "300px 300px",
     swatches: [
-      { id: "c-calacatta", name: "Calacatta Gold", img: "/tiles/table/calacatta.png" },
-      { id: "c-black-galaxy", name: "Black Galaxy", img: "/tiles/table/black-galaxy.png" },
-      { id: "c-white-quartz", name: "Pure White Quartz", img: "/tiles/table/white-quartz.png" },
+      { id: "c-calacatta", name: "Calacatta Gold", img: "/tiles/table/black-galaxy.png" },
+      { id: "c-black-galaxy", name: "Black Galaxy", img: "/tiles/table/brown-marble.png" },
+      { id: "c-white-quartz", name: "Pure White Quartz", img: "/tiles/table/calacatta.png" },
     ],
   },
   floor: {
     label: "Flooring",
-    maskImage: "/masks/floor-mask.png",
-    blend: "multiply",
+    maskImage: "/masks/floor-maskks.png",
+    blend: "normal",
     size: "260px 260px",
     swatches: [
-      { id: "f-light-wood", name: "Light Wood", img: "/tiles/floor/light-wood.png" },
-      { id: "f-grey-tile", name: "Grey Tile", img: "/tiles/floor/grey-tile.png" },
+      { id: "f-light-wood", name: "Light Wood", img: "/carrara.png" },
+      { id: "f-grey-tile", name: "Grey Tile", img: "/tiles/floor/grey-sandstone.png" },
       { id: "f-dark-marble", name: "Dark Emperador", img: "/tiles/floor/dark-marble.png" },
     ],
   },
@@ -99,7 +103,7 @@ export default function HeroVisualizer() {
       >
         {/* Base kitchen photo */}
         <Image
-          src="/kitchen2.png"
+          src="/kitchens.png"
           alt="Kitchen with island table and open wood flooring"
           fill
           priority
@@ -124,6 +128,10 @@ export default function HeroVisualizer() {
                 mixBlendMode: cfg.blend,
                 WebkitMaskImage: `url(${cfg.maskImage})`,
                 maskImage: `url(${cfg.maskImage})`,
+                // luminance mode = use the mask's black/white brightness,
+                // not its (nonexistent) transparency channel
+                WebkitMaskMode: "luminance" as any,
+                maskMode: "luminance" as any,
                 WebkitMaskSize: "100% 100%",
                 maskSize: "100% 100%",
                 WebkitMaskRepeat: "no-repeat",
@@ -135,12 +143,13 @@ export default function HeroVisualizer() {
           );
         })}
 
-        {/* Heading */}
-        <div className="absolute top-0 left-0 right-0 pt-6 md:pt-10 text-center px-4 bg-gradient-to-b from-black/50 to-transparent pb-10 pointer-events-none">
-          <p className="text-xs tracking-[0.3em] uppercase text-stone-200 mb-2">
+        {/* Heading — lighter gradient so the photo stays clear,
+            just enough darkening behind the text for readability */}
+        <div className="absolute top-0 left-0 right-0 pt-6 md:pt-10 text-center px-4 bg-gradient-to-b from-black/20 to-transparent pb-10 pointer-events-none">
+          <p className="text-xs tracking-[0.3em] uppercase text-stone-200 mb-2 drop-shadow-md">
             Visualise Your Space
           </p>
-          <h1 className="font-display text-2xl md:text-4xl text-white leading-tight">
+          <h1 className="font-display text-2xl md:text-4xl text-white leading-tight drop-shadow-md">
             See your stone, before you lay it.
           </h1>
         </div>
@@ -201,6 +210,425 @@ export default function HeroVisualizer() {
     </section>
   );
 }
+
+
+
+// "use client";
+// import { useState } from "react";
+// import Image from "next/image";
+
+// /**
+//  * ─────────────────────────────────────────────────────────────────────
+//  * HOW THIS WORKS — mask images instead of guessed coordinates
+//  * ─────────────────────────────────────────────────────────────────────
+//  * 1. /public/kitchen2.png is the base photo.
+//  * 2. For each surface (table, Floor) there is ONE black & white
+//  *    mask PNG, same pixel size as kitchen2.png:
+//  *      - WHITE  = texture shows here
+//  *      - BLACK  = texture is hidden here (original photo shows through)
+//  *    This is what lets you carve out the faucet, sink, handles, or
+//  *    any obstruction — just paint that spot black in the mask, no
+//  *    coordinates or polygons needed.
+//  * 3. The texture is applied with CSS `mask-image: url(mask.png)`,
+//  *    using `mask-mode: luminance` so the browser reads the mask's
+//  *    black/white BRIGHTNESS (not its alpha/transparency channel).
+//  *    This matters because a flattened, fully-opaque PNG (like the
+//  *    ones exported from Photopea) has NO transparency at all — so
+//  *    without luminance mode the browser treats the whole image as
+//  *    100% visible and the texture leaks across the entire photo.
+//  *
+//  * HOW TO MAKE A MASK (Photoshop / Figma / even MS Paint):
+//  *   1. Open kitchen2.png as your base/reference layer.
+//  *   2. New layer, fill it solid BLACK, same canvas size.
+//  *   3. Paint WHITE over the table (or floor) area only — zoom in
+//  *      and go around the faucet/sink/handles so they stay BLACK.
+//  *   4. A little feather/blur (1-2px) on the white edge looks more
+//  *      natural than a hard edge — optional but recommended.
+//  *   5. Export as PNG (flatten it — this file does NOT need
+//  *      transparency, just black & white) into:
+//  *        /public/masks/table-mask.png
+//  *        /public/masks/floor-mask.png
+//  *
+//  * You only ever make ONE mask per surface — it works for every
+//  * material/swatch automatically, since the mask and the texture are
+//  * applied together but are separate images.
+//  * ─────────────────────────────────────────────────────────────────────
+//  */
+
+// type Swatch = { id: string; name: string; img: string };
+// type CategoryKey = "table" | "floor";
+// type Category = {
+//   label: string;
+//   maskImage: string;
+//   blend: React.CSSProperties["mixBlendMode"];
+//   size: string;
+//   swatches: Swatch[];
+// };
+
+// const CATEGORIES: Record<CategoryKey, Category> = {
+//   table: {
+//     label: "table",
+//     maskImage: "/masks/table-mask.png",
+//     blend: "multiply",
+//     size: "300px 300px",
+//     swatches: [
+//       { id: "c-calacatta", name: "Calacatta Gold", img: "/tiles/table/black-galaxy.png" },
+//       { id: "c-black-galaxy", name: "Black Galaxy", img: "/tiles/table/brown-marble.png" },
+//       { id: "c-white-quartz", name: "Pure White Quartz", img: "/tiles/table/calacatta.png" },
+//     ],
+//   },
+//   floor: {
+//     label: "Flooring",
+//     maskImage: "/masks/floor-mask.png",
+//     blend: "multiply",
+//     size: "260px 260px",
+//     swatches: [
+//       { id: "f-light-wood", name: "Light Wood", img: "/tiles/floor/beige-marble.png" },
+//       { id: "f-grey-tile", name: "Grey Tile", img: "/tiles/floor/grey-tile.png" },
+//       { id: "f-dark-marble", name: "Dark Emperador", img: "/tiles/floor/dark-marble.png" },
+//     ],
+//   },
+// };
+
+// const CATEGORY_KEYS = Object.keys(CATEGORIES) as CategoryKey[];
+
+// export default function HeroVisualizer() {
+//   const [activeCategory, setActiveCategory] = useState<CategoryKey>("table");
+//   const [selections, setSelections] = useState<Record<CategoryKey, Swatch | null>>({
+//     table: null,
+//     floor: null,
+//   });
+
+//   const current = CATEGORIES[activeCategory];
+
+//   const selectSwatch = (swatch: Swatch) => {
+//     setSelections((prev) => ({ ...prev, [activeCategory]: swatch }));
+//   };
+
+//   const clearSwatch = () => {
+//     setSelections((prev) => ({ ...prev, [activeCategory]: null }));
+//   };
+
+//   return (
+//     <section className="bg-stone-900">
+//       {/* ── PHOTO STAGE ───────────────────────────────────────────────── */}
+//       <div
+//         className="relative w-full overflow-hidden"
+//         style={{ aspectRatio: "1225 / 980" }}
+//       >
+//         {/* Base kitchen photo */}
+//         <Image
+//           src="/kitchen2.png"
+//           alt="Kitchen with island table and open wood flooring"
+//           fill
+//           priority
+//           className="object-cover"
+//         />
+
+//         {/* Applied texture overlays — shaped by the mask PNG, not by
+//             coordinates. White areas of the mask show the texture,
+//             black areas (faucet, sink, cabinets, etc.) show the photo. */}
+//         {CATEGORY_KEYS.map((key) => {
+//           const sel = selections[key];
+//           if (!sel) return null;
+//           const cfg = CATEGORIES[key];
+//           return (
+//             <div
+//               key={key}
+//               className="absolute inset-0 pointer-events-none"
+//               style={{
+//                 backgroundImage: `url(${sel.img})`,
+//                 backgroundSize: cfg.size,
+//                 backgroundRepeat: "repeat",
+//                 mixBlendMode: cfg.blend,
+//                 WebkitMaskImage: `url(${cfg.maskImage})`,
+//                 maskImage: `url(${cfg.maskImage})`,
+//                 // luminance mode = use the mask's black/white brightness,
+//                 // not its (nonexistent) transparency channel
+//                 WebkitMaskMode: "luminance" as any,
+//                 maskMode: "luminance" as any,
+//                 WebkitMaskSize: "100% 100%",
+//                 maskSize: "100% 100%",
+//                 WebkitMaskRepeat: "no-repeat",
+//                 maskRepeat: "no-repeat",
+//                 WebkitMaskPosition: "center",
+//                 maskPosition: "center",
+//               }}
+//             />
+//           );
+//         })}
+
+//         {/* Heading */}
+//         <div className="absolute top-0 left-0 right-0 pt-6 md:pt-10 text-center px-4 bg-gradient-to-b from-black/50 to-transparent pb-10 pointer-events-none">
+//           <p className="text-xs tracking-[0.3em] uppercase text-stone-200 mb-2">
+//             Visualise Your Space
+//           </p>
+//           <h1 className="font-display text-2xl md:text-4xl text-white leading-tight">
+//             See your stone, before you lay it.
+//           </h1>
+//         </div>
+//       </div>
+
+//       {/* ── CONTROL BAR ── */}
+//       <div className="bg-stone-900 border-t border-stone-800">
+//         <div className="max-w-5xl mx-auto px-4 py-6">
+//           <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
+//             {CATEGORY_KEYS.map((key) => (
+//               <button
+//                 key={key}
+//                 onClick={() => setActiveCategory(key)}
+//                 className={`px-5 py-2.5 rounded-full text-xs font-medium tracking-wide uppercase transition-colors ${
+//                   activeCategory === key
+//                     ? "bg-white text-stone-900"
+//                     : "bg-stone-800 text-white hover:bg-stone-700"
+//                 }`}
+//               >
+//                 {CATEGORIES[key].label}
+//               </button>
+//             ))}
+//           </div>
+
+//           <div className="flex items-center justify-center gap-3 flex-wrap">
+//             <button
+//               onClick={clearSwatch}
+//               className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 flex items-center justify-center text-[10px] text-stone-300 ${
+//                 !selections[activeCategory]
+//                   ? "border-white scale-110"
+//                   : "border-stone-600 hover:border-stone-400"
+//               }`}
+//               title="Original"
+//             >
+//               None
+//             </button>
+//             {current.swatches.map((swatch) => (
+//               <button
+//                 key={swatch.id}
+//                 onClick={() => selectSwatch(swatch)}
+//                 className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+//                   selections[activeCategory]?.id === swatch.id
+//                     ? "border-white scale-110"
+//                     : "border-stone-600 hover:border-stone-400"
+//                 }`}
+//                 title={swatch.name}
+//               >
+//                 <Image src={swatch.img} alt={swatch.name} fill className="object-cover" />
+//               </button>
+//             ))}
+//           </div>
+
+//           <p className="text-center text-stone-400 text-xs mt-4">
+//             {selections[activeCategory]?.name ?? "Original — pick a finish above"}
+//           </p>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
+
+
+// "use client";
+// import { useState } from "react";
+// import Image from "next/image";
+
+// /**
+//  * ─────────────────────────────────────────────────────────────────────
+//  * HOW THIS WORKS — mask images instead of guessed coordinates
+//  * ─────────────────────────────────────────────────────────────────────
+//  * 1. /public/kitchen2.png is the base photo.
+//  * 2. For each surface (table, Floor) there is ONE black & white
+//  *    mask PNG, same pixel size as kitchen2.png:
+//  *      - WHITE  = texture shows here
+//  *      - BLACK  = texture is hidden here (original photo shows through)
+//  *    This is what lets you carve out the faucet, sink, handles, or
+//  *    any obstruction — just paint that spot black in the mask, no
+//  *    coordinates or polygons needed.
+//  * 3. The texture is applied with CSS `mask-image: url(mask.png)`,
+//  *    which uses the mask's white/black areas directly — completely
+//  *    replacing the old clip-path polygon guessing.
+//  *
+//  * HOW TO MAKE A MASK (Photoshop / Figma / even MS Paint):
+//  *   1. Open kitchen2.png as your base/reference layer.
+//  *   2. New layer, fill it solid BLACK, same canvas size.
+//  *   3. Paint WHITE over the table (or floor) area only — zoom in
+//  *      and go around the faucet/sink/handles so they stay BLACK.
+//  *   4. A little feather/blur (1-2px) on the white edge looks more
+//  *      natural than a hard edge — optional but recommended.
+//  *   5. Export as PNG (flatten it — this file does NOT need
+//  *      transparency, just black & white) into:
+//  *        /public/masks/table-mask.png
+//  *        /public/masks/floor-mask.png
+//  *
+//  * You only ever make ONE mask per surface — it works for every
+//  * material/swatch automatically, since the mask and the texture are
+//  * applied together but are separate images.
+//  * ─────────────────────────────────────────────────────────────────────
+//  */
+
+// type Swatch = { id: string; name: string; img: string };
+// type CategoryKey = "table" | "floor";
+// type Category = {
+//   label: string;
+//   maskImage: string;
+//   blend: React.CSSProperties["mixBlendMode"];
+//   size: string;
+//   swatches: Swatch[];
+// };
+
+// const CATEGORIES: Record<CategoryKey, Category> = {
+//   table: {
+//     label: "table",
+//     maskImage: "/masks/table-mask.png",
+//     blend: "multiply",
+//     size: "300px 300px",
+//     swatches: [
+//       { id: "c-calacatta", name: "Calacatta Gold", img: "/tiles/table/black-galaxy.png" },
+//       { id: "c-black-galaxy", name: "Black Galaxy", img: "/tiles/table/brown-marble.png" },
+//       { id: "c-white-quartz", name: "Pure White Quartz", img: "/tiles/table/calacatta.png" },
+//     ],
+//   },
+//   floor: {
+//     label: "Flooring",
+//     maskImage: "/masks/floor-mask.png",
+//     blend: "multiply",
+//     size: "260px 260px",
+//     swatches: [
+//       { id: "f-light-wood", name: "Light Wood", img: "/tiles/floor/beige-marble.png" },
+//       { id: "f-grey-tile", name: "Grey Tile", img: "/tiles/floor/grey-tile.png" },
+//       { id: "f-dark-marble", name: "Dark Emperador", img: "/tiles/floor/dark-marble.png" },
+//     ],
+//   },
+// };
+
+// const CATEGORY_KEYS = Object.keys(CATEGORIES) as CategoryKey[];
+
+// export default function HeroVisualizer() {
+//   const [activeCategory, setActiveCategory] = useState<CategoryKey>("table");
+//   const [selections, setSelections] = useState<Record<CategoryKey, Swatch | null>>({
+//     table: null,
+//     floor: null,
+//   });
+
+//   const current = CATEGORIES[activeCategory];
+
+//   const selectSwatch = (swatch: Swatch) => {
+//     setSelections((prev) => ({ ...prev, [activeCategory]: swatch }));
+//   };
+
+//   const clearSwatch = () => {
+//     setSelections((prev) => ({ ...prev, [activeCategory]: null }));
+//   };
+
+//   return (
+//     <section className="bg-stone-900">
+//       {/* ── PHOTO STAGE ───────────────────────────────────────────────── */}
+//       <div
+//         className="relative w-full overflow-hidden"
+//         style={{ aspectRatio: "1225 / 980" }}
+//       >
+//         {/* Base kitchen photo */}
+//         <Image
+//           src="/kitchen2.png"
+//           alt="Kitchen with island table and open wood flooring"
+//           fill
+//           priority
+//           className="object-cover"
+//         />
+
+//         {/* Applied texture overlays — shaped by the mask PNG, not by
+//             coordinates. White areas of the mask show the texture,
+//             black areas (faucet, sink, cabinets, etc.) show the photo. */}
+//         {CATEGORY_KEYS.map((key) => {
+//           const sel = selections[key];
+//           if (!sel) return null;
+//           const cfg = CATEGORIES[key];
+//           return (
+//             <div
+//               key={key}
+//               className="absolute inset-0 pointer-events-none"
+//               style={{
+//                 backgroundImage: `url(${sel.img})`,
+//                 backgroundSize: cfg.size,
+//                 backgroundRepeat: "repeat",
+//                 mixBlendMode: cfg.blend,
+//                 WebkitMaskImage: `url(${cfg.maskImage})`,
+//                 maskImage: `url(${cfg.maskImage})`,
+//                 WebkitMaskSize: "100% 100%",
+//                 maskSize: "100% 100%",
+//                 WebkitMaskRepeat: "no-repeat",
+//                 maskRepeat: "no-repeat",
+//                 WebkitMaskPosition: "center",
+//                 maskPosition: "center",
+//               }}
+//             />
+//           );
+//         })}
+
+//         {/* Heading */}
+//         <div className="absolute top-0 left-0 right-0 pt-6 md:pt-10 text-center px-4 bg-gradient-to-b from-black/50 to-transparent pb-10 pointer-events-none">
+//           <p className="text-xs tracking-[0.3em] uppercase text-stone-200 mb-2">
+//             Visualise Your Space
+//           </p>
+//           <h1 className="font-display text-2xl md:text-4xl text-white leading-tight">
+//             See your stone, before you lay it.
+//           </h1>
+//         </div>
+//       </div>
+
+//       {/* ── CONTROL BAR ── */}
+//       <div className="bg-stone-900 border-t border-stone-800">
+//         <div className="max-w-5xl mx-auto px-4 py-6">
+//           <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
+//             {CATEGORY_KEYS.map((key) => (
+//               <button
+//                 key={key}
+//                 onClick={() => setActiveCategory(key)}
+//                 className={`px-5 py-2.5 rounded-full text-xs font-medium tracking-wide uppercase transition-colors ${
+//                   activeCategory === key
+//                     ? "bg-white text-stone-900"
+//                     : "bg-stone-800 text-white hover:bg-stone-700"
+//                 }`}
+//               >
+//                 {CATEGORIES[key].label}
+//               </button>
+//             ))}
+//           </div>
+
+//           <div className="flex items-center justify-center gap-3 flex-wrap">
+//             <button
+//               onClick={clearSwatch}
+//               className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 flex items-center justify-center text-[10px] text-stone-300 ${
+//                 !selections[activeCategory]
+//                   ? "border-white scale-110"
+//                   : "border-stone-600 hover:border-stone-400"
+//               }`}
+//               title="Original"
+//             >
+//               None
+//             </button>
+//             {current.swatches.map((swatch) => (
+//               <button
+//                 key={swatch.id}
+//                 onClick={() => selectSwatch(swatch)}
+//                 className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+//                   selections[activeCategory]?.id === swatch.id
+//                     ? "border-white scale-110"
+//                     : "border-stone-600 hover:border-stone-400"
+//                 }`}
+//                 title={swatch.name}
+//               >
+//                 <Image src={swatch.img} alt={swatch.name} fill className="object-cover" />
+//               </button>
+//             ))}
+//           </div>
+
+//           <p className="text-center text-stone-400 text-xs mt-4">
+//             {selections[activeCategory]?.name ?? "Original — pick a finish above"}
+//           </p>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
 
 
 // "use client";

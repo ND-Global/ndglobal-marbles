@@ -1,8 +1,6 @@
 "use client";
-
-import { RoomState } from "@/types/index";
+import { RoomState } from "@/types";
 import { floorOptions, wallOptions, tableOptions } from "@/data";
-
 export default function RoomSVG({ state }: { state: RoomState }) {
   const floor = floorOptions[state.floor];
   const wall  = wallOptions[state.wall];
