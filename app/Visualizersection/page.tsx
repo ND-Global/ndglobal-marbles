@@ -1,16 +1,31 @@
+
 "use client";
 
 import { useState } from "react";
 import RoomSVG from "../components/Roomsvg/RoomSVG";
 import SwatchPicker from "../Swatchpicker/page";
 import { floorOptions, wallOptions, tableOptions } from "@/data";
-import { Category, RoomState } from "@/types";
+import { RoomState } from "@/types";
+
+type Category = "floor" | "wall" | "table";
 
 const TABS: { key: Category; label: string }[] = [
   { key: "floor", label: "🪵 Floor" },
-  { key: "wall",  label: "🎨 Wall"  },
+  { key: "wall", label: "🎨 Wall" },
   { key: "table", label: "🪑 Table" },
 ];
+
+// import { useState } from "react";
+// import RoomSVG from "../components/Roomsvg/RoomSVG";
+// import SwatchPicker from "../Swatchpicker/page";
+// import { floorOptions, wallOptions, tableOptions } from "@/data";
+// import { Category, RoomState } from "@/types";
+
+// const TABS: { key: Category; label: string }[] = [
+//   { key: "floor", label: "🪵 Floor" },
+//   { key: "wall",  label: "🎨 Wall"  },
+//   { key: "table", label: "🪑 Table" },
+// ];
 
 const INFO: Record<Category, { heading: string; options: { label: string; color: string }[] }> = {
   floor: { heading: "Select floor style", options: floorOptions },
